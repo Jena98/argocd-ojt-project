@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: external-dns
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/jenana-devops/argocd-ojt-project.git
+        revision: HEAD
+        files:
+          - path: "env/addons/*/*.json"
+
+  template:
+    metadata:
+      name: "external-dns-{{cluster.name}}"
+      labels:
+        group: addons
+      annotations:
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: notification
+
+    spec:
+      project: addons
+      destination:
+        name: "{{cluster.name}}"  
+        namespace: my-addons
+      source:
+        repoURL: https://kubernetes-sigs.github.io/external-dns
+        targetRevision: "1.7.1"
+        chart: external-dns
+        helm:
+          values: |-
+            fullnameOverride: external-dns
+
+            serviceAccount:
+              create: false
+              name: external-dns
+              
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

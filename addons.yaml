@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: addons-demo
+  namespace: argocd
+  #finalizers:
+    #- resources-finalizer.argocd.argoproj.io  
+  labels:
+    group: addons
+  
+spec:
+  project: addons
+
+  source:
+    path: addons
+    repoURL: https://github.com/jenana-devops/argocd-ojt-project.git
+    targetRevision: HEAD
+
+  destination:
+    namespace: argocd
+    server: "https://kubernetes.default.svc"
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      

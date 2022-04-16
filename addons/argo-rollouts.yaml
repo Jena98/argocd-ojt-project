@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: argo-rollouts
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/jenana-devops/argocd-ojt-project.git
+        revision: HEAD
+        files:
+          - path: "env/addons/ops/*.json"
+
+  template:
+    metadata:
+      name: "argo-rollouts-{{cluster.name}}"
+      labels:
+        group: addons
+      annotations:
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: notification
+
+    spec:
+      project: addons
+      destination:
+        name: "{{cluster.name}}"
+        namespace: my-addons
+      source:
+        repoURL: https://argoproj.github.io/argo-helm
+        targetRevision: "2.11.0"
+        chart: argo-rollouts
+        helm:
+          values: |-
+            fullnameOverride: argo-rollouts
+            
+            controller:
+              replicas: 1
+
+            controller:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

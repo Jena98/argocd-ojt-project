@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nginx
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/jenana-devops/argocd-ojt-project.git
+        revision: HEAD
+        files:
+          - path: "env/apps/svc/*.json"
+        
+  template:
+    metadata:
+      name: 'nginx-{{cluster.name}}'
+      labels:
+        group: apps      
+      annotations:
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: notification
+        
+    spec:
+      project: apps
+
+      source:
+        repoURL: https://github.com/jenana-devops/argocd-ojt-project.git
+        targetRevision: HEAD
+        path: charts/nginx
+
+      destination:
+        name: '{{cluster.name}}'
+        namespace: my-apps
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: aws-load-balancer-controller
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/jenana-devops/argocd-ojt-project.git
+        revision: HEAD
+        files:
+          - path: "env/addons/*/*.json"
+
+  template:
+    metadata:
+      name: "aws-load-balancer-controller-{{cluster.name}}"
+      labels:
+        group: addons
+      annotations:
+        notifications.argoproj.io/subscribe.on-sync-succeeded.slack: notification
+
+    spec:
+      project: addons
+      destination:
+        name: "{{cluster.name}}"  
+        namespace: my-addons
+      source:
+        repoURL: https://aws.github.io/eks-charts
+        targetRevision: "1.4.1"
+        chart: aws-load-balancer-controller
+        helm:
+          values: |-
+            fullnameOverride: aws-load-balancer-controller
+
+            replicaCount: 1
+
+            clusterName: "{{cluster.name}}"
+
+            serviceAccount:
+              create: false
+              name: "aws-load-balancer-controller"
+              
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

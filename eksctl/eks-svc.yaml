@@ -1,0 +1,46 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-svc
+  region: ap-northeast-2
+  version: "1.21"
+
+iam:
+  withOIDC: true
+
+vpc:
+  subnets:
+    private:
+      ap-northeast-2a: { id: subnet- }
+      ap-northeast-2c: { id: subnet- }
+
+managedNodeGroups:
+  - name: eks-svc-worker
+    instanceType: t3.medium
+    instanceName: eks-svc-worker
+    privateNetworking: true
+    # autoscaling
+    minSize: 2
+    maxSize: 4
+    desiredCapacity: 2
+    # volume
+    volumeType: gp3
+    volumeSize: 12
+    # ssh 
+    ssh:
+      allow: true
+      # keypair-pem key
+      publicKeyName: 
+      # new feature for restricting SSH access to certain AWS security group IDs
+      sourceSecurityGroupIds: ["sg-"]
+    labels: {role: worker}
+    tags:
+      nodegroup-role: worker
+
+        
+          
+
+        
+
+ 
